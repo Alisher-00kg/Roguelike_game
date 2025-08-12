@@ -1,58 +1,13 @@
-// render.js
-
 class Renderer {
-  constructor(fieldElement, tileSize) {
+  constructor(fieldElement, tileSize, player, findEnemyAt) {
     this.fieldElement = fieldElement;
     this.tileSize = tileSize;
+    this.player = player;
+    this.findEnemyAt = findEnemyAt; // функция для поиска врага
   }
 
-  //   renderMap(map) {
-  //     this.fieldElement.innerHTML = "";
-  //     for (let y = 0; y < map.length; y++) {
-  //       for (let x = 0; x < map[y].length; x++) {
-  //         const tileType = map[y][x];
-  //         const tileDiv = document.createElement("div");
-  //         tileDiv.classList.add("tile");
-  //         switch (tileType) {
-  //           case "tileW-tl":
-  //           case "tileW-tr":
-  //           case "tileW-bl":
-  //           case "tileW-br":
-  //           case "tileW-h":
-  //           case "tileW-v":
-  //             tileDiv.classList.add("tileW", tileType);
-  //             break;
-  //           case "tileP":
-  //             tileDiv.classList.add("tileP");
-  //             break;
-  //           case "tileE":
-  //             tileDiv.classList.add("tileE");
-  //             break;
-  //           case "tileSW":
-  //             tileDiv.classList.add("tileSW");
-  //             break;
-  //           case "tileHP":
-  //             tileDiv.classList.add("tileHP");
-  //             break;
-  //           case "empty":
-  //             // пусто, просто "tile"
-  //             break;
-  //           default:
-  //             // на всякий случай, если что-то не распознали
-  //             break;
-  //         }
-
-  //         tileDiv.style.left = x * this.tileSize + "px";
-  //         tileDiv.style.top = y * this.tileSize + "px";
-  //         tileDiv.style.width = this.tileSize + "px";
-  //         tileDiv.style.height = this.tileSize + "px";
-
-  //         this.fieldElement.appendChild(tileDiv);
-  //       }
-  //     }
-  //   }
   renderMap(map) {
-    const field = document.querySelector(".field");
+    const field = this.fieldElement;
     field.innerHTML = "";
 
     for (let y = 0; y < map.length; y++) {
@@ -60,8 +15,9 @@ class Renderer {
         const tileType = map[y][x];
         const tileDiv = document.createElement("div");
         tileDiv.classList.add("tile");
-        tileDiv.style.left = x * 50 + "px";
-        tileDiv.style.top = y * 50 + "px";
+        tileDiv.style.left = x * this.tileSize + "px";
+        tileDiv.style.top = y * this.tileSize + "px";
+        tileDiv.style.position = "absolute";
 
         switch (tileType) {
           case "empty":
@@ -72,9 +28,46 @@ class Renderer {
             break;
           case "tileP":
             tileDiv.classList.add("tileP");
+
+            // Шкала здоровья игрока
+            const playerHealthBar = document.createElement("div");
+            playerHealthBar.classList.add("health");
+            playerHealthBar.style.width =
+              (this.player.health / this.player.maxHealth) * 100 + "%";
+            playerHealthBar.style.backgroundColor = "#00ff00";
+            tileDiv.appendChild(playerHealthBar);
+
+            // Если у игрока есть меч — добавляем иконку
+            if (this.player.hasSword) {
+              const swordIcon = document.createElement("div");
+              swordIcon.style.backgroundImage =
+                "url(./assets/images/tile-SW.png)";
+              swordIcon.style.backgroundSize = "contain";
+              swordIcon.style.backgroundRepeat = "no-repeat";
+              swordIcon.style.width = "20px";
+              swordIcon.style.height = "20px";
+              swordIcon.style.position = "absolute";
+              swordIcon.style.bottom = "20px";
+              swordIcon.style.right = "-10px";
+              tileDiv.appendChild(swordIcon);
+            }
             break;
           case "tileE":
             tileDiv.classList.add("tileE");
+
+            // Шкала здоровья врага
+            const enemy = this.findEnemyAt(x, y);
+            if (enemy) {
+              const enemyHealthBar = document.createElement("div");
+              enemyHealthBar.classList.add("health");
+              enemyHealthBar.style.width =
+                (enemy.health / enemy.maxHealth) * 100 + "%";
+              enemyHealthBar.style.backgroundColor = "#ff0000";
+              enemyHealthBar.style.height = "5px";
+              enemyHealthBar.style.position = "absolute";
+              enemyHealthBar.style.top = "-6px";
+              tileDiv.appendChild(enemyHealthBar);
+            }
             break;
           case "tileHP":
             tileDiv.classList.add("tileHP");
@@ -83,7 +76,6 @@ class Renderer {
             tileDiv.classList.add("tileSW");
             break;
           default:
-            // Если нужно, добавить дефолтный стиль
             tileDiv.classList.add("tile-empty");
             break;
         }

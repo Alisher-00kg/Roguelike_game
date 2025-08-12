@@ -13,9 +13,15 @@ class Game {
       health: 100,
       maxHealth: 100,
       attack: 10,
+      hasSword: false,
     };
     this.enemies = [];
-    this.renderer = new Renderer(this.fieldElement, this.tileSize);
+    this.renderer = new Renderer(
+      document.querySelector(".field"),
+      50,
+      this.player,
+      this.findEnemyAt.bind(this)
+    );
   }
 
   init() {
@@ -53,7 +59,7 @@ class Game {
       const y = 1 + Math.floor(Math.random() * (this.tilesY - 2));
       if (this.map[y][x] === "empty") {
         this.map[y][x] = "tileE";
-        this.enemies.push({ x, y, health: 30 });
+        this.enemies.push({ x, y, health: 30, maxHealth: 30 });
         placed++;
       }
     }
@@ -221,6 +227,10 @@ class Game {
       }
     }
   }
+  findEnemyAt(x, y) {
+    return this.enemies.find((enemy) => enemy.x === x && enemy.y === y) || null;
+  }
+
   setupControls() {
     document.addEventListener("keydown", (e) => {
       let newX = this.player.x;
@@ -261,6 +271,7 @@ class Game {
           console.log("Собрали зелье, здоровье:", this.player.health);
         } else if (tile === "tileSW") {
           this.player.attack += 5;
+          this.player.hasSword = true;
           console.log("Собрали меч, атака:", this.player.attack);
         } else if (tile === "tileE") {
           this.fightEnemy(newX, newY);
@@ -287,7 +298,6 @@ class Game {
   }
 
   attackEnemies() {
-    // Атака всех врагов вокруг игрока по соседним клеткам
     const directions = [
       [0, -1],
       [0, 1],
@@ -305,9 +315,18 @@ class Game {
         y < this.tilesY &&
         this.map[y][x] === "tileE"
       ) {
-        // Уничтожаем врага (пока просто удаляем с карты)
-        this.map[y][x] = "empty";
-        console.log("Атакован враг на", x, y);
+        const enemy = this.findEnemyAt(x, y);
+        if (enemy) {
+          enemy.health -= this.player.attack;
+          console.log(`Враг получил урон! Здоровье: ${enemy.health}`);
+
+          if (enemy.health <= 0) {
+            // убираем врага с карты
+            this.map[y][x] = "empty";
+            this.enemies = this.enemies.filter((e) => e !== enemy);
+            console.log("Враг повержен!");
+          }
+        }
       }
     });
 

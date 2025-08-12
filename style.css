@@ -39,3 +39,11 @@
 .tileW-bl {
   transform: rotate(270deg);
 }
+.health {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  height: 5px;
+  border-radius: 2px;
+  opacity: 0.8;
+}
