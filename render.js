@@ -3,7 +3,7 @@ class Renderer {
     this.fieldElement = fieldElement;
     this.tileSize = tileSize;
     this.player = player;
-    this.findEnemyAt = findEnemyAt; 
+    this.findEnemyAt = findEnemyAt;
   }
   renderMap(map) {
     const field = this.fieldElement;
@@ -122,15 +122,8 @@ class Renderer {
           tileElem.appendChild(enemyHealthBar);
         }
         break;
-
-      // Можно добавить обновление для других типов тайлов, если нужно
-      case "tileHP":
-      case "tileSW":
-        // оставляем только класс
-        break;
-
       default:
-        // пустой тайл
+        console.log("Error!");
         break;
     }
   }
