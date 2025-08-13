@@ -378,7 +378,6 @@ class Game {
     this.checkGameOver();
   }
 }
-
 window.onload = () => {
   const game = new Game();
   game.init();
