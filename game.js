@@ -29,13 +29,23 @@ class Game {
     this.generateRooms();
     this.connectRooms();
     this.placeItems();
-    this.placeEnemies(10);
     this.placePlayer();
     this.renderer.renderMap(this.map);
     this.setupControls();
-
+    this.resetEnemies();
+    this.placeEnemies(10);
     this.startEnemyMovement();
   }
+  isWalkable(x, y) {
+    // Проверяем границы карты
+    if (x < 0 || y < 0 || y >= this.map.length || x >= this.map[0].length) {
+      return false;
+    }
+    // Только пустые тайлы можно пройти
+    const tile = this.map[y][x];
+    return tile === "empty" || tile === "tileHP" || tile === "tileSW";
+  }
+
   startEnemyMovement() {
     this.enemyMoveInterval = setInterval(() => {
       this.moveEnemies();
@@ -52,52 +62,97 @@ class Game {
       this.placeRandom("tileHP");
     }
   }
-  placeEnemies(count) {
-    let placed = 0;
-    while (placed < count) {
-      const x = 1 + Math.floor(Math.random() * (this.tilesX - 2));
-      const y = 1 + Math.floor(Math.random() * (this.tilesY - 2));
-      if (this.map[y][x] === "empty") {
+  movePlayer(dx, dy) {
+    const newX = this.player.x + dx;
+    const newY = this.player.y + dy;
+
+    if (!this.isWalkable(newX, newY)) return;
+
+    // Сохраняем старые координаты перед изменением
+    const oldX = this.player.x;
+    const oldY = this.player.y;
+
+    // Обновляем игрока
+    this.player.x = newX;
+    this.player.y = newY;
+
+    // Если на тайле предмет
+    const tile = this.map[newY][newX];
+    if (tile === "tileHP") {
+      this.player.health = Math.min(
+        this.player.health + 20,
+        this.player.maxHealth
+      );
+      console.log("Собрали зелье, здоровье:", this.player.health);
+    } else if (tile === "tileSW") {
+      this.player.attack += 5;
+      this.player.hasSword = true;
+      console.log("Собрали меч, атака:", this.player.attack);
+    }
+
+    // Обновляем карту
+    this.map[oldY][oldX] = "empty";
+    this.map[newY][newX] = "tileP";
+
+    // Обновляем только изменившиеся тайлы
+    this.renderer.updateTile(oldX, oldY, "tile-empty");
+    this.renderer.updateTile(newX, newY, "tileP");
+  }
+
+  placeEnemies(count = 10) {
+    while (this.enemies.length < count) {
+      const room = this.rooms[Math.floor(Math.random() * this.rooms.length)];
+      const x = Math.floor(Math.random() * room.width + room.x);
+      const y = Math.floor(Math.random() * room.height + room.y);
+
+      if (
+        !this.enemies.some((e) => e.x === x && e.y === y) &&
+        this.map[y][x] === "empty"
+      ) {
+        this.enemies.push({ x, y, health: 30, maxHealth: 30, attack: 5 });
         this.map[y][x] = "tileE";
-        this.enemies.push({ x, y, health: 30, maxHealth: 30 });
-        placed++;
       }
     }
   }
+
+  resetEnemies() {
+    for (const enemy of this.enemies) {
+      this.map[enemy.y][enemy.x] = "empty";
+    }
+    this.enemies = [];
+  }
   moveEnemies() {
     this.enemies.forEach((enemy) => {
-      const directions = [
+      const oldX = enemy.x;
+      const oldY = enemy.y;
+
+      const dirs = [
         [0, -1],
         [0, 1],
         [-1, 0],
         [1, 0],
-        [0, 0],
       ];
-      const [dx, dy] =
-        directions[Math.floor(Math.random() * directions.length)];
+      const [dx, dy] = dirs[Math.floor(Math.random() * dirs.length)];
+
       const newX = enemy.x + dx;
       const newY = enemy.y + dy;
 
-      if (
-        newX > 0 &&
-        newX < this.tilesX - 1 &&
-        newY > 0 &&
-        newY < this.tilesY - 1 &&
-        this.map[newY][newX] === "empty" &&
-        !(newX === this.player.x && newY === this.player.y)
-      ) {
-        this.map[enemy.y][enemy.x] = "empty";
-        enemy.x = newX;
-        enemy.y = newY;
-        this.map[newY][newX] = "tileE";
-      } else if (
-        Math.abs(newX - this.player.x) <= 1 &&
-        Math.abs(newY - this.player.y) <= 1
-      ) {
-        this.attackPlayer();
+      if (newX >= 0 && newX < this.tilesX && newY >= 0 && newY < this.tilesY) {
+        const targetTile = this.map[newY][newX];
+        if (this.player.x === newX && this.player.y === newY) {
+          this.attackPlayer();
+        } else if (targetTile === "empty") {
+          // обновляем врага на карте
+          this.map[oldY][oldX] = "empty";
+          this.map[newY][newX] = "tileE";
+          enemy.x = newX;
+          enemy.y = newY;
+
+          this.renderer.updateTile(oldX, oldY, "tile-empty");
+          this.renderer.updateTile(newX, newY, "tileE");
+        }
       }
     });
-    this.renderer.renderMap(this.map);
   }
 
   attackPlayer() {
@@ -131,100 +186,106 @@ class Game {
     }
   }
   createMap() {
-    for (let y = 0; y < this.tilesY; y++) {
-      this.map[y] = [];
-      for (let x = 0; x < this.tilesX; x++) {
-        if (y === 0 && x === 0) {
-          this.map[y][x] = "tileW-tl"; // верхний левый угол
-        } else if (y === 0 && x === this.tilesX - 1) {
-          this.map[y][x] = "tileW-tr"; // верхний правый угол
-        } else if (y === this.tilesY - 1 && x === 0) {
-          this.map[y][x] = "tileW-bl"; // нижний левый угол
-        } else if (y === this.tilesY - 1 && x === this.tilesX - 1) {
-          this.map[y][x] = "tileW-br"; // нижний правый угол
-        } else if (y === 0 || y === this.tilesY - 1) {
-          this.map[y][x] = "tileW-h"; // горизонтальная стена
-        } else if (x === 0 || x === this.tilesX - 1) {
-          this.map[y][x] = "tileW-v"; // вертикальная стена
-        } else {
-          this.map[y][x] = "empty";
-        }
-      }
-    }
+    // Создаем пустую карту
+    this.map = Array.from({ length: this.tilesY }, () =>
+      Array.from({ length: this.tilesX }, () => "tileW")
+    );
+    this.rooms = [];
   }
 
   placePlayer() {
-    this.player.x = Math.floor(this.tilesX / 2);
-    this.player.y = Math.floor(this.tilesY / 2);
-    this.player.health = 100;
-    this.player.maxHealth = 100;
-    this.player.attack = 10;
-    this.map[this.player.y][this.player.x] = "tileP"; // игрок
+    const room = this.rooms[0];
+    const x = Math.floor(room.x + room.width / 2);
+    const y = Math.floor(room.y + room.height / 2);
+    this.player = {
+      x,
+      y,
+      health: 100,
+      maxHealth: 100,
+      attack: 10, // обязательно добавить
+      hasSword: false,
+    };
+    this.map[y][x] = "tileP";
+  }
+  pickupItem(x, y) {
+    const tile = this.map[y][x];
+    if (tile === "tileHP") {
+      this.player.health = Math.min(
+        this.player.health + 20,
+        this.player.maxHealth
+      );
+      console.log("Собрали зелье, здоровье:", this.player.health);
+    } else if (tile === "tileSW") {
+      this.player.attack += 5;
+      this.player.hasSword = true;
+      console.log("Собрали меч, атака:", this.player.attack);
+    }
   }
 
-  generateRooms() {
-    const roomCount = 3 + Math.floor(Math.random() * 3);
-    this.rooms = [];
+  generateRooms(maxRooms = 5, roomMinSize = 3, roomMaxSize = 6) {
+    const isOverlapping = (r1, r2) =>
+      r1.x < r2.x + r2.width &&
+      r1.x + r1.width > r2.x &&
+      r1.y < r2.y + r2.height &&
+      r1.y + r1.height > r2.y;
 
-    for (let i = 0; i < roomCount; i++) {
-      const roomWidth = 3 + Math.floor(Math.random() * 6);
-      const roomHeight = 3 + Math.floor(Math.random() * 6);
+    let attempts = 0;
+    while (this.rooms.length < maxRooms && attempts < 50) {
+      const width =
+        roomMinSize +
+        Math.floor(Math.random() * (roomMaxSize - roomMinSize + 1));
+      const height =
+        roomMinSize +
+        Math.floor(Math.random() * (roomMaxSize - roomMinSize + 1));
+      const x = 1 + Math.floor(Math.random() * (this.tilesX - width - 2));
+      const y = 1 + Math.floor(Math.random() * (this.tilesY - height - 2));
+      const newRoom = { x, y, width, height };
 
-      const roomX =
-        1 + Math.floor(Math.random() * (this.tilesX - roomWidth - 2));
-      const roomY =
-        1 + Math.floor(Math.random() * (this.tilesY - roomHeight - 2));
-
-      // Сначала ставим стены по периметру комнаты
-      for (let y = roomY; y < roomY + roomHeight; y++) {
-        for (let x = roomX; x < roomX + roomWidth; x++) {
-          // Внешние границы комнаты — стены
-          if (
-            y === roomY || // верхняя стена
-            y === roomY + roomHeight - 1 || // нижняя стена
-            x === roomX || // левая стена
-            x === roomX + roomWidth - 1 // правая стена
-          ) {
-            this.map[y][x] = "tileW"; // или можно более конкретно "tileW-v" или "tileW-h"
-          } else {
-            this.map[y][x] = "empty"; // внутреннее пространство комнаты
+      if (!this.rooms.some((r) => isOverlapping(r, newRoom))) {
+        this.rooms.push(newRoom);
+        for (let i = y; i < y + height; i++) {
+          for (let j = x; j < x + width; j++) {
+            this.map[i][j] = "empty";
           }
         }
       }
-
-      this.rooms.push({
-        x: roomX,
-        y: roomY,
-        width: roomWidth,
-        height: roomHeight,
-      });
+      attempts++;
     }
   }
 
   connectRooms() {
+    // Простое соединение комнат через прямые коридоры
     for (let i = 1; i < this.rooms.length; i++) {
       const prev = this.rooms[i - 1];
       const curr = this.rooms[i];
 
-      const prevCenterX = Math.floor(prev.x + prev.width / 2);
-      const prevCenterY = Math.floor(prev.y + prev.height / 2);
-      const currCenterX = Math.floor(curr.x + curr.width / 2);
-      const currCenterY = Math.floor(curr.y + curr.height / 2);
+      const prevCenter = {
+        x: Math.floor(prev.x + prev.width / 2),
+        y: Math.floor(prev.y + prev.height / 2),
+      };
+      const currCenter = {
+        x: Math.floor(curr.x + curr.width / 2),
+        y: Math.floor(curr.y + curr.height / 2),
+      };
 
-      for (
-        let x = Math.min(prevCenterX, currCenterX);
-        x <= Math.max(prevCenterX, currCenterX);
-        x++
-      ) {
-        this.map[prevCenterY][x] = "empty";
+      if (Math.random() > 0.5) {
+        this.createHTunnel(prevCenter.x, currCenter.x, prevCenter.y);
+        this.createVTunnel(prevCenter.y, currCenter.y, currCenter.x);
+      } else {
+        this.createVTunnel(prevCenter.y, currCenter.y, prevCenter.x);
+        this.createHTunnel(prevCenter.x, currCenter.x, currCenter.y);
       }
-      for (
-        let y = Math.min(prevCenterY, currCenterY);
-        y <= Math.max(prevCenterY, currCenterY);
-        y++
-      ) {
-        this.map[y][currCenterX] = "empty";
-      }
+    }
+  }
+  createHTunnel(x1, x2, y) {
+    for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) {
+      this.map[y][x] = "empty";
+    }
+  }
+
+  createVTunnel(y1, y2, x) {
+    for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) {
+      this.map[y][x] = "empty";
     }
   }
   findEnemyAt(x, y) {
@@ -286,7 +347,6 @@ class Game {
         this.renderer.renderMap(this.map);
 
         // После движения игрока вызываем движение врагов:
-        this.moveEnemies();
       }
     });
   }
@@ -296,41 +356,42 @@ class Game {
     console.log("Встреча с врагом!");
     // Можно реализовать урон и логику позже
   }
-
   attackEnemies() {
-    const directions = [
-      [0, -1],
-      [0, 1],
-      [-1, 0],
-      [1, 0],
+    const dirs = [
+      [0, -1], // вверх
+      [0, 1], // вниз
+      [-1, 0], // влево
+      [1, 0], // вправо
     ];
 
-    directions.forEach(([dx, dy]) => {
-      const x = this.player.x + dx;
-      const y = this.player.y + dy;
-      if (
-        x >= 0 &&
-        x < this.tilesX &&
-        y >= 0 &&
-        y < this.tilesY &&
-        this.map[y][x] === "tileE"
-      ) {
-        const enemy = this.findEnemyAt(x, y);
-        if (enemy) {
-          enemy.health -= this.player.attack;
-          console.log(`Враг получил урон! Здоровье: ${enemy.health}`);
+    let attacked = false;
 
-          if (enemy.health <= 0) {
-            // убираем врага с карты
-            this.map[y][x] = "empty";
-            this.enemies = this.enemies.filter((e) => e !== enemy);
-            console.log("Враг повержен!");
-          }
+    dirs.forEach(([dx, dy]) => {
+      const targetX = this.player.x + dx;
+      const targetY = this.player.y + dy;
+
+      const enemy = this.findEnemyAt(targetX, targetY);
+      if (enemy) {
+        enemy.health -= this.player.attack;
+        console.log(`Враг получил урон! Здоровье: ${enemy.health}`);
+
+        if (enemy.health <= 0) {
+          // удаляем врага
+          this.enemies = this.enemies.filter((e) => e !== enemy);
+          this.map[enemy.y][enemy.x] = "empty";
+          this.renderer.updateTile(enemy.x, enemy.y, "tile-empty");
+          console.log("Враг повержен!");
+        } else {
+          this.renderer.updateTile(enemy.x, enemy.y, "tileE");
         }
+
+        attacked = true;
       }
     });
 
-    this.renderer.renderMap(this.map);
+    if (!attacked) {
+      console.log("Нет врагов рядом для атаки.");
+    }
   }
 }
 

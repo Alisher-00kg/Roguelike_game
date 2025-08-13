@@ -18,6 +18,8 @@ class Renderer {
         tileDiv.style.left = x * this.tileSize + "px";
         tileDiv.style.top = y * this.tileSize + "px";
         tileDiv.style.position = "absolute";
+        tileDiv.setAttribute("data-x", x);
+        tileDiv.setAttribute("data-y", y);
 
         switch (tileType) {
           case "empty":
@@ -82,6 +84,66 @@ class Renderer {
 
         field.appendChild(tileDiv);
       }
+    }
+  }
+  updateTile(x, y, tileType) {
+    const tileElem = this.fieldElement.querySelector(
+      `[data-x='${x}'][data-y='${y}']`
+    );
+    if (!tileElem) return;
+
+    tileElem.className = "tile " + tileType;
+    tileElem.innerHTML = ""; // очищаем содержимое
+
+    switch (tileType) {
+      case "tileP":
+        // Шкала здоровья игрока
+        const playerHealthBar = document.createElement("div");
+        playerHealthBar.classList.add("health");
+        playerHealthBar.style.width =
+          (this.player.health / this.player.maxHealth) * 100 + "%";
+        playerHealthBar.style.backgroundColor = "#00ff00";
+        tileElem.appendChild(playerHealthBar);
+
+        // Иконка меча, если есть
+        if (this.player.hasSword) {
+          const swordIcon = document.createElement("div");
+          swordIcon.style.backgroundImage = "url(./assets/images/tile-SW.png)";
+          swordIcon.style.backgroundSize = "contain";
+          swordIcon.style.backgroundRepeat = "no-repeat";
+          swordIcon.style.width = "20px";
+          swordIcon.style.height = "20px";
+          swordIcon.style.position = "absolute";
+          swordIcon.style.bottom = "0";
+          swordIcon.style.right = "0";
+          tileElem.appendChild(swordIcon);
+        }
+        break;
+
+      case "tileE":
+        const enemy = this.findEnemyAt(x, y);
+        if (enemy) {
+          const enemyHealthBar = document.createElement("div");
+          enemyHealthBar.classList.add("health");
+          enemyHealthBar.style.width =
+            (enemy.health / enemy.maxHealth) * 100 + "%";
+          enemyHealthBar.style.backgroundColor = "#ff0000";
+          enemyHealthBar.style.height = "5px";
+          enemyHealthBar.style.position = "absolute";
+          enemyHealthBar.style.top = "0";
+          tileElem.appendChild(enemyHealthBar);
+        }
+        break;
+
+      // Можно добавить обновление для других типов тайлов, если нужно
+      case "tileHP":
+      case "tileSW":
+        // оставляем только класс
+        break;
+
+      default:
+        // пустой тайл
+        break;
     }
   }
 }
