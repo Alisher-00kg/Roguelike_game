@@ -21,15 +21,11 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./style.css" />
-    <script
-      type="text/javascript"
-      src="/shared/3rdparty/jquery/jquery.js"
-      language="javascript1.1"
-    ></script>
-    <script src="./utils.js"></script>
+
+    <script src="./game.js"></script>
     <script src="./render.js"></script>
     <script src="./controls.js"></script>
-    <script src="./game.js"></script>
+    <script src="./utils.js"></script>
 
     <style>
       * {
@@ -123,7 +119,6 @@
         border: 2px solid #555;
       }
 
-      /* Дополнительные классы для углов и сторон стен: */
       .tileW-top {
         border-top: 4px solid #333;
       }
@@ -142,12 +137,5 @@
     <h1>Игровое поле</h1>
     <div class="field-box"><div class="field"></div></div>
     <div class="cl"></div>
-    <!--h1>Инвентарь</h1>
-		<div class="inventory-box"><div class="inventory"></div></div-->
-
-    <script>
-      var game = new Game();
-      game.init();
-    </script>
   </body>
 </html>

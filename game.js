@@ -1,5 +1,3 @@
-// game.js
-
 class Game {
   constructor() {
     this.fieldElement = document.querySelector(".field");
@@ -23,7 +21,6 @@ class Game {
       this.findEnemyAt.bind(this)
     );
   }
-
   init() {
     this.createMap();
     this.generateRooms();
@@ -37,27 +34,21 @@ class Game {
     this.startEnemyMovement();
   }
   isWalkable(x, y) {
-    // Проверяем границы карты
     if (x < 0 || y < 0 || y >= this.map.length || x >= this.map[0].length) {
       return false;
     }
-    // Только пустые тайлы можно пройти
     const tile = this.map[y][x];
     return tile === "empty" || tile === "tileHP" || tile === "tileSW";
   }
-
   startEnemyMovement() {
     this.enemyMoveInterval = setInterval(() => {
       this.moveEnemies();
-    }, 1500); // враги двигаются раз в 1.5 секунды
+    }, 1500);
   }
-
   placeItems() {
-    // Мечи
     for (let i = 0; i < 2; i++) {
       this.placeRandom("tileSW");
     }
-    // Зелья здоровья
     for (let i = 0; i < 10; i++) {
       this.placeRandom("tileHP");
     }
@@ -65,18 +56,11 @@ class Game {
   movePlayer(dx, dy) {
     const newX = this.player.x + dx;
     const newY = this.player.y + dy;
-
     if (!this.isWalkable(newX, newY)) return;
-
-    // Сохраняем старые координаты перед изменением
     const oldX = this.player.x;
     const oldY = this.player.y;
-
-    // Обновляем игрока
     this.player.x = newX;
     this.player.y = newY;
-
-    // Если на тайле предмет
     const tile = this.map[newY][newX];
     if (tile === "tileHP") {
       this.player.health = Math.min(
@@ -89,16 +73,11 @@ class Game {
       this.player.hasSword = true;
       console.log("Собрали меч, атака:", this.player.attack);
     }
-
-    // Обновляем карту
     this.map[oldY][oldX] = "empty";
     this.map[newY][newX] = "tileP";
-
-    // Обновляем только изменившиеся тайлы
     this.renderer.updateTile(oldX, oldY, "tile-empty");
     this.renderer.updateTile(newX, newY, "tileP");
   }
-
   placeEnemies(count = 10) {
     while (this.enemies.length < count) {
       const room = this.rooms[Math.floor(Math.random() * this.rooms.length)];
@@ -114,7 +93,6 @@ class Game {
       }
     }
   }
-
   resetEnemies() {
     for (const enemy of this.enemies) {
       this.map[enemy.y][enemy.x] = "empty";
@@ -125,7 +103,6 @@ class Game {
     this.enemies.forEach((enemy) => {
       const oldX = enemy.x;
       const oldY = enemy.y;
-
       const dirs = [
         [0, -1],
         [0, 1],
@@ -133,36 +110,60 @@ class Game {
         [1, 0],
       ];
       const [dx, dy] = dirs[Math.floor(Math.random() * dirs.length)];
-
       const newX = enemy.x + dx;
       const newY = enemy.y + dy;
-
       if (newX >= 0 && newX < this.tilesX && newY >= 0 && newY < this.tilesY) {
         const targetTile = this.map[newY][newX];
         if (this.player.x === newX && this.player.y === newY) {
           this.attackPlayer();
         } else if (targetTile === "empty") {
-          // обновляем врага на карте
           this.map[oldY][oldX] = "empty";
           this.map[newY][newX] = "tileE";
           enemy.x = newX;
           enemy.y = newY;
-
           this.renderer.updateTile(oldX, oldY, "tile-empty");
           this.renderer.updateTile(newX, newY, "tileE");
         }
       }
     });
   }
-
   attackPlayer() {
     this.player.health -= 5;
     console.log("Враг атакует! Здоровье игрока:", this.player.health);
+
+    this.checkGameOver();
+  }
+  checkGameOver() {
     if (this.player.health <= 0) {
-      alert("Игра окончена! Вы проиграли.");
+      console.log("Вы проиграли! Игра окончена.");
       clearInterval(this.enemyMoveInterval);
-      // Можно добавить рестарт или что-то еще
+      alert("Игра окончена! Вы проиграли.");
+      this.restart();
+      return;
     }
+    if (this.enemies.length === 0) {
+      console.log("Поздравляем! Все враги побеждены.");
+      clearInterval(this.enemyMoveInterval);
+      alert("Поздравляем! Все враги побеждены.");
+      this.restart();
+    }
+  }
+  restart() {
+    console.log("Перезапуск игры...");
+    clearInterval(this.enemyMoveInterval);
+    this.fieldElement.innerHTML = "";
+    this.map = [];
+    this.enemies = [];
+    this.player = {
+      x: 0,
+      y: 0,
+      health: 100,
+      maxHealth: 100,
+      attack: 10,
+      hasSword: false,
+    };
+    this.gameOver = false;
+    this.init();
   }
   placeRandom(tileType) {
     while (true) {
@@ -186,13 +187,11 @@ class Game {
     }
   }
   createMap() {
-    // Создаем пустую карту
     this.map = Array.from({ length: this.tilesY }, () =>
       Array.from({ length: this.tilesX }, () => "tileW")
     );
     this.rooms = [];
   }
-
   placePlayer() {
     const room = this.rooms[0];
     const x = Math.floor(room.x + room.width / 2);
@@ -202,7 +201,7 @@ class Game {
       y,
       health: 100,
       maxHealth: 100,
-      attack: 10, // обязательно добавить
+      attack: 10,
       hasSword: false,
     };
     this.map[y][x] = "tileP";
@@ -221,7 +220,6 @@ class Game {
       console.log("Собрали меч, атака:", this.player.attack);
     }
   }
-
   generateRooms(maxRooms = 5, roomMinSize = 3, roomMaxSize = 6) {
     const isOverlapping = (r1, r2) =>
       r1.x < r2.x + r2.width &&
@@ -252,13 +250,10 @@ class Game {
       attempts++;
     }
   }
-
   connectRooms() {
-    // Простое соединение комнат через прямые коридоры
     for (let i = 1; i < this.rooms.length; i++) {
       const prev = this.rooms[i - 1];
       const curr = this.rooms[i];
-
       const prevCenter = {
         x: Math.floor(prev.x + prev.width / 2),
         y: Math.floor(prev.y + prev.height / 2),
@@ -267,7 +262,6 @@ class Game {
         x: Math.floor(curr.x + curr.width / 2),
         y: Math.floor(curr.y + curr.height / 2),
       };
-
       if (Math.random() > 0.5) {
         this.createHTunnel(prevCenter.x, currCenter.x, prevCenter.y);
         this.createVTunnel(prevCenter.y, currCenter.y, currCenter.x);
@@ -282,7 +276,6 @@ class Game {
       this.map[y][x] = "empty";
     }
   }
-
   createVTunnel(y1, y2, x) {
     for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) {
       this.map[y][x] = "empty";
@@ -291,9 +284,12 @@ class Game {
   findEnemyAt(x, y) {
     return this.enemies.find((enemy) => enemy.x === x && enemy.y === y) || null;
   }
-
   setupControls() {
-    document.addEventListener("keydown", (e) => {
+    if (this.keydownHandler) {
+      document.removeEventListener("keydown", this.keydownHandler);
+    }
+
+    this.keydownHandler = (e) => {
       let newX = this.player.x;
       let newY = this.player.y;
 
@@ -323,7 +319,6 @@ class Game {
         !this.map[newY][newX].startsWith("tileW")
       ) {
         const tile = this.map[newY][newX];
-
         if (tile === "tileHP") {
           this.player.health = Math.min(
             this.player.health + 20,
@@ -338,45 +333,35 @@ class Game {
           this.fightEnemy(newX, newY);
           return;
         }
-
         this.map[this.player.y][this.player.x] = "empty";
         this.player.x = newX;
         this.player.y = newY;
         this.map[newY][newX] = "tileP";
 
         this.renderer.renderMap(this.map);
-
-        // После движения игрока вызываем движение врагов:
       }
-    });
+    };
+    document.addEventListener("keydown", this.keydownHandler);
   }
-
   fightEnemy(enemyX, enemyY) {
-    // Простейшая логика боя
     console.log("Встреча с врагом!");
-    // Можно реализовать урон и логику позже
   }
   attackEnemies() {
     const dirs = [
-      [0, -1], // вверх
-      [0, 1], // вниз
-      [-1, 0], // влево
-      [1, 0], // вправо
+      [0, -1],
+      [0, 1],
+      [-1, 0],
+      [1, 0],
     ];
-
     let attacked = false;
-
     dirs.forEach(([dx, dy]) => {
       const targetX = this.player.x + dx;
       const targetY = this.player.y + dy;
-
       const enemy = this.findEnemyAt(targetX, targetY);
       if (enemy) {
         enemy.health -= this.player.attack;
         console.log(`Враг получил урон! Здоровье: ${enemy.health}`);
-
         if (enemy.health <= 0) {
-          // удаляем врага
           this.enemies = this.enemies.filter((e) => e !== enemy);
           this.map[enemy.y][enemy.x] = "empty";
           this.renderer.updateTile(enemy.x, enemy.y, "tile-empty");
@@ -384,14 +369,13 @@ class Game {
         } else {
           this.renderer.updateTile(enemy.x, enemy.y, "tileE");
         }
-
         attacked = true;
       }
     });
-
     if (!attacked) {
       console.log("Нет врагов рядом для атаки.");
     }
+    this.checkGameOver();
   }
 }
 

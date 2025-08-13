@@ -3,13 +3,11 @@ class Renderer {
     this.fieldElement = fieldElement;
     this.tileSize = tileSize;
     this.player = player;
-    this.findEnemyAt = findEnemyAt; // функция для поиска врага
+    this.findEnemyAt = findEnemyAt; 
   }
-
   renderMap(map) {
     const field = this.fieldElement;
     field.innerHTML = "";
-
     for (let y = 0; y < map.length; y++) {
       for (let x = 0; x < map[y].length; x++) {
         const tileType = map[y][x];
@@ -31,15 +29,12 @@ class Renderer {
           case "tileP":
             tileDiv.classList.add("tileP");
 
-            // Шкала здоровья игрока
             const playerHealthBar = document.createElement("div");
             playerHealthBar.classList.add("health");
             playerHealthBar.style.width =
               (this.player.health / this.player.maxHealth) * 100 + "%";
             playerHealthBar.style.backgroundColor = "#00ff00";
             tileDiv.appendChild(playerHealthBar);
-
-            // Если у игрока есть меч — добавляем иконку
             if (this.player.hasSword) {
               const swordIcon = document.createElement("div");
               swordIcon.style.backgroundImage =
@@ -56,8 +51,6 @@ class Renderer {
             break;
           case "tileE":
             tileDiv.classList.add("tileE");
-
-            // Шкала здоровья врага
             const enemy = this.findEnemyAt(x, y);
             if (enemy) {
               const enemyHealthBar = document.createElement("div");
@@ -91,21 +84,17 @@ class Renderer {
       `[data-x='${x}'][data-y='${y}']`
     );
     if (!tileElem) return;
-
     tileElem.className = "tile " + tileType;
-    tileElem.innerHTML = ""; // очищаем содержимое
+    tileElem.innerHTML = "";
 
     switch (tileType) {
       case "tileP":
-        // Шкала здоровья игрока
         const playerHealthBar = document.createElement("div");
         playerHealthBar.classList.add("health");
         playerHealthBar.style.width =
           (this.player.health / this.player.maxHealth) * 100 + "%";
         playerHealthBar.style.backgroundColor = "#00ff00";
         tileElem.appendChild(playerHealthBar);
-
-        // Иконка меча, если есть
         if (this.player.hasSword) {
           const swordIcon = document.createElement("div");
           swordIcon.style.backgroundImage = "url(./assets/images/tile-SW.png)";
@@ -119,7 +108,6 @@ class Renderer {
           tileElem.appendChild(swordIcon);
         }
         break;
-
       case "tileE":
         const enemy = this.findEnemyAt(x, y);
         if (enemy) {

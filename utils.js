@@ -1,7 +1,5 @@
-// utils.js
 
 /**
- * Возвращает случайное целое число от min (включительно) до max (включительно)
  * @param {number} min
  * @param {number} max
  * @returns {number}
