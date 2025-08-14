@@ -86,7 +86,8 @@ class Renderer {
         field.appendChild(tileDiv);
       }
     }
-  }
+  }  
+  
   updateTile(x, y, tileType) {
     const tileElem = this.fieldElement.querySelector(
       `[data-x='${x}'][data-y='${y}']`
@@ -101,7 +102,6 @@ class Renderer {
         playerHealthBar.classList.add("health");
         playerHealthBar.style.width =
           (this.player.health / this.player.maxHealth) * 100 + "%";
-        playerHealthBar.style.backgroundColor = "#00ff00";
         tileElem.appendChild(playerHealthBar);
         if (this.player.hasSword) {
           const swordIcon = document.createElement("div");
@@ -111,8 +111,8 @@ class Renderer {
           swordIcon.style.width = "20px";
           swordIcon.style.height = "20px";
           swordIcon.style.position = "absolute";
-          swordIcon.style.bottom = "0";
-          swordIcon.style.right = "0";
+          swordIcon.style.bottom = "20px";
+          swordIcon.style.right = "-10px";
           tileElem.appendChild(swordIcon);
         }
         break;
@@ -123,15 +123,10 @@ class Renderer {
           enemyHealthBar.classList.add("health");
           enemyHealthBar.style.width =
             (enemy.health / enemy.maxHealth) * 100 + "%";
-          enemyHealthBar.style.backgroundColor = "#ff0000";
-          enemyHealthBar.style.height = "5px";
-          enemyHealthBar.style.position = "absolute";
-          enemyHealthBar.style.top = "0";
           tileElem.appendChild(enemyHealthBar);
         }
         break;
       default:
-        console.log("Error!");
         break;
     }
   }

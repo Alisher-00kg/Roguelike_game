@@ -21,6 +21,7 @@ class Game {
       this.findEnemyAt.bind(this)
     );
   }
+
   init() {
     this.createMap();
     this.generateRooms();
@@ -33,6 +34,7 @@ class Game {
     this.placeEnemies(10);
     this.startEnemyMovement();
   }
+
   isWalkable(x, y) {
     if (x < 0 || y < 0 || y >= this.map.length || x >= this.map[0].length) {
       return false;
@@ -40,11 +42,13 @@ class Game {
     const tile = this.map[y][x];
     return tile === "empty" || tile === "tileHP" || tile === "tileSW";
   }
+
   startEnemyMovement() {
     this.enemyMoveInterval = setInterval(() => {
       this.moveEnemies();
     }, 1500);
   }
+
   placeItems() {
     for (let i = 0; i < 2; i++) {
       this.placeRandom("tileSW");
@@ -53,6 +57,7 @@ class Game {
       this.placeRandom("tileHP");
     }
   }
+
   movePlayer(dx, dy) {
     const newX = this.player.x + dx;
     const newY = this.player.y + dy;
@@ -78,6 +83,7 @@ class Game {
     this.renderer.updateTile(oldX, oldY, "tile-empty");
     this.renderer.updateTile(newX, newY, "tileP");
   }
+
   placeEnemies(count = 10) {
     while (this.enemies.length < count) {
       const room = this.rooms[Math.floor(Math.random() * this.rooms.length)];
@@ -93,12 +99,14 @@ class Game {
       }
     }
   }
+
   resetEnemies() {
     for (const enemy of this.enemies) {
       this.map[enemy.y][enemy.x] = "empty";
     }
     this.enemies = [];
   }
+
   moveEnemies() {
     this.enemies.forEach((enemy) => {
       const oldX = enemy.x;
@@ -127,12 +135,14 @@ class Game {
       }
     });
   }
+
   attackPlayer() {
-    this.player.health -= 35;
+    this.player.health -= 10;
     console.log("Враг атакует! Здоровье игрока:", this.player.health);
     this.renderer.updatePlayerHealth();
     this.checkGameOver();
   }
+
   checkGameOver() {
     if (this.player.health <= 0) {
       console.log("Вы проиграли! Игра окончена.");
@@ -148,6 +158,7 @@ class Game {
       this.restart();
     }
   }
+
   restart() {
     console.log("Перезапуск игры...");
     clearInterval(this.enemyMoveInterval);
@@ -165,6 +176,7 @@ class Game {
     this.gameOver = false;
     this.init();
   }
+
   placeRandom(tileType) {
     while (true) {
       const x = 1 + Math.floor(Math.random() * (this.tilesX - 2));
@@ -175,6 +187,7 @@ class Game {
       }
     }
   }
+
   placeRandomItems(type, count) {
     let placed = 0;
     while (placed < count) {
@@ -186,12 +199,14 @@ class Game {
       }
     }
   }
+
   createMap() {
     this.map = Array.from({ length: this.tilesY }, () =>
       Array.from({ length: this.tilesX }, () => "tileW")
     );
     this.rooms = [];
   }
+
   placePlayer() {
     const room = this.rooms[0];
     const x = Math.floor(room.x + room.width / 2);
@@ -224,6 +239,7 @@ class Game {
       console.log("Собрали меч, атака:", this.player.attack);
     }
   }
+
   generateRooms(maxRooms = 5, roomMinSize = 3, roomMaxSize = 6) {
     const isOverlapping = (r1, r2) =>
       r1.x < r2.x + r2.width &&
@@ -254,6 +270,7 @@ class Game {
       attempts++;
     }
   }
+
   connectRooms() {
     for (let i = 1; i < this.rooms.length; i++) {
       const prev = this.rooms[i - 1];
@@ -275,19 +292,23 @@ class Game {
       }
     }
   }
+
   createHTunnel(x1, x2, y) {
     for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) {
       this.map[y][x] = "empty";
     }
   }
+
   createVTunnel(y1, y2, x) {
     for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) {
       this.map[y][x] = "empty";
     }
   }
+
   findEnemyAt(x, y) {
     return this.enemies.find((enemy) => enemy.x === x && enemy.y === y) || null;
   }
+
   setupControls() {
     if (this.keydownHandler) {
       document.removeEventListener("keydown", this.keydownHandler);
@@ -348,9 +369,11 @@ class Game {
     };
     document.addEventListener("keydown", this.keydownHandler);
   }
+
   fightEnemy(enemyX, enemyY) {
     console.log("Встреча с врагом!");
   }
+  
   attackEnemies() {
     const dirs = [
       [0, -1],
