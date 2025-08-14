@@ -5,9 +5,19 @@ class Renderer {
     this.player = player;
     this.findEnemyAt = findEnemyAt;
   }
+
+  updatePlayerHealth() {
+    const bar = this.fieldElement.querySelector(".tileP .health");
+    if (bar) {
+      bar.style.width =
+        (this.player.health / this.player.maxHealth) * 100 + "%";
+    }
+  }
+
   renderMap(map) {
     const field = this.fieldElement;
     field.innerHTML = "";
+
     for (let y = 0; y < map.length; y++) {
       for (let x = 0; x < map[y].length; x++) {
         const tileType = map[y][x];
@@ -23,9 +33,11 @@ class Renderer {
           case "empty":
             tileDiv.classList.add("tile-empty");
             break;
+
           case "tileW":
             tileDiv.classList.add("tileW");
             break;
+
           case "tileP":
             tileDiv.classList.add("tileP");
 
@@ -33,8 +45,8 @@ class Renderer {
             playerHealthBar.classList.add("health");
             playerHealthBar.style.width =
               (this.player.health / this.player.maxHealth) * 100 + "%";
-            playerHealthBar.style.backgroundColor = "#00ff00";
             tileDiv.appendChild(playerHealthBar);
+
             if (this.player.hasSword) {
               const swordIcon = document.createElement("div");
               swordIcon.style.backgroundImage =
@@ -49,6 +61,7 @@ class Renderer {
               tileDiv.appendChild(swordIcon);
             }
             break;
+
           case "tileE":
             tileDiv.classList.add("tileE");
             const enemy = this.findEnemyAt(x, y);
@@ -57,21 +70,16 @@ class Renderer {
               enemyHealthBar.classList.add("health");
               enemyHealthBar.style.width =
                 (enemy.health / enemy.maxHealth) * 100 + "%";
-              enemyHealthBar.style.backgroundColor = "#ff0000";
-              enemyHealthBar.style.height = "5px";
-              enemyHealthBar.style.position = "absolute";
-              enemyHealthBar.style.top = "-6px";
               tileDiv.appendChild(enemyHealthBar);
             }
             break;
+
           case "tileHP":
             tileDiv.classList.add("tileHP");
             break;
+
           case "tileSW":
             tileDiv.classList.add("tileSW");
-            break;
-          default:
-            tileDiv.classList.add("tile-empty");
             break;
         }
 

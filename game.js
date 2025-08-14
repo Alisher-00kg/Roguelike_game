@@ -128,9 +128,9 @@ class Game {
     });
   }
   attackPlayer() {
-    this.player.health -= 5;
+    this.player.health -= 35;
     console.log("Враг атакует! Здоровье игрока:", this.player.health);
-
+    this.renderer.updatePlayerHealth();
     this.checkGameOver();
   }
   checkGameOver() {
@@ -154,14 +154,14 @@ class Game {
     this.fieldElement.innerHTML = "";
     this.map = [];
     this.enemies = [];
-    this.player = {
+    Object.assign(this.player, {
       x: 0,
       y: 0,
       health: 100,
       maxHealth: 100,
       attack: 10,
       hasSword: false,
-    };
+    });
     this.gameOver = false;
     this.init();
   }
@@ -196,16 +196,18 @@ class Game {
     const room = this.rooms[0];
     const x = Math.floor(room.x + room.width / 2);
     const y = Math.floor(room.y + room.height / 2);
-    this.player = {
+    Object.assign(this.player, {
       x,
       y,
       health: 100,
       maxHealth: 100,
       attack: 10,
       hasSword: false,
-    };
+    });
+
     this.map[y][x] = "tileP";
   }
+
   pickupItem(x, y) {
     const tile = this.map[y][x];
     if (tile === "tileHP") {
@@ -213,6 +215,8 @@ class Game {
         this.player.health + 20,
         this.player.maxHealth
       );
+      this.renderer.updatePlayerHealth();
+
       console.log("Собрали зелье, здоровье:", this.player.health);
     } else if (tile === "tileSW") {
       this.player.attack += 5;
@@ -324,6 +328,7 @@ class Game {
             this.player.health + 20,
             this.player.maxHealth
           );
+          this.renderer.updatePlayerHealth();
           console.log("Собрали зелье, здоровье:", this.player.health);
         } else if (tile === "tileSW") {
           this.player.attack += 5;

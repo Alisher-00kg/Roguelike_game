@@ -88,18 +88,7 @@ h1 {
   box-sizing: border-box;
   border: 2px solid #555;
 }
-.tileW-top {
-  border-top: 4px solid #333;
-}
-.tileW-bottom {
-  border-bottom: 4px solid #333;
-}
-.tileW-left {
-  border-left: 4px solid #333;
-}
-.tileW-right {
-  border-right: 4px solid #333;
-}
+
 .health {
   position: absolute;
   bottom: 2px;
